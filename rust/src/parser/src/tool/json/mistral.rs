@@ -48,6 +48,10 @@ impl ToolParser for MistralToolParser {
         Ok(Box::new(Self::new(tools)))
     }
 
+    fn preserve_special_tokens(&self) -> bool {
+        true
+    }
+
     fn parse_into(&mut self, chunk: DecodedText, output: &mut ToolParserOutput) -> Result<()> {
         self.inner.parse_into(chunk, output)
     }
