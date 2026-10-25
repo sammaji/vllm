@@ -433,6 +433,35 @@ mod tests {
         );
     }
 
+    /// `[TOOL_CALLS]` is a special token in Mistral tokenizers, so decoding
+    /// with `skip_special_tokens` would strip the marker the parser looks for.
+    #[test]
+    fn mistral_tool_parsing_keeps_special_tokens() {
+        let tools = vec![ChatTool {
+            name: "search".to_string(),
+            description: None,
+            parameters: serde_json::json!({"type": "object"}),
+            strict: None,
+            defer_loading: None,
+        }];
+        let mut request = ChatRequest {
+            tool_context: ResolvedToolContext::new(&[], tools, Some(ChatToolChoice::Auto), true)
+                .unwrap(),
+            ..ChatRequest::for_test()
+        };
+        DefaultChatOutputProcessor::new(
+            &mut request,
+            "mistralai/Mistral-7B-Instruct-v0.3",
+            tokenizer(),
+            &ParserSelection::Explicit("mistral".to_string()),
+            &ParserSelection::None,
+            None,
+        )
+        .unwrap();
+
+        assert!(!request.decode_options.skip_special_tokens);
+    }
+
     #[test]
     fn unset_tool_strict_level_falls_back_to_the_parser_default() {
         let build = |parser, level| search_grammar(parser, level, None, ChatToolChoice::Auto);
